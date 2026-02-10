@@ -12,6 +12,9 @@ import { CurrencyModule } from './modules/currency/currency.module';
 import { UserModule } from './modules/user/user.module';
 import appConfig from './config/app.config';
 
+const THROTTLE_TTL_MS = 60000; // ms (60 seconds)
+const THROTTLE_LIMIT = 20; // Maximum requests per TTL
+
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -22,8 +25,8 @@ import appConfig from './config/app.config';
     ScheduleModule.forRoot(),
     ThrottlerModule.forRoot([
       {
-        ttl: 60000, // 60 seconds
-        limit: 20, // Maximum 20 requests per 60 seconds
+        ttl: THROTTLE_TTL_MS,
+        limit: THROTTLE_LIMIT,
       },
     ]),
     FirebaseModule,
