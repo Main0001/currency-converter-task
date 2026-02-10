@@ -4,6 +4,8 @@ import { FirebaseService } from '../firebase/firebase.service';
 import { ExternalApiService } from '../external-api/external-api.service';
 import type { RatesResponse } from './dto/currency.dto';
 
+const DEFAULT_BASE_CURRENCY = 'USD';
+
 /**
  * CurrencyService - service for working with currencies
  *
@@ -65,7 +67,7 @@ export class CurrencyService {
       actualBase = user?.base_currency;
     }
     if (!actualBase) {
-      actualBase = 'USD';
+      actualBase = DEFAULT_BASE_CURRENCY;
     }
 
     const cacheKey = this.cacheService.generateKey('rates', {
