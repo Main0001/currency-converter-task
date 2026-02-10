@@ -9,19 +9,24 @@ export class UserService {
 
   constructor(private readonly firebaseService: FirebaseService) {}
 
-  //Получить настройки пользователя
+  /**
+   * Get user settings
+   * @param {string} userId - User ID
+   * @returns {Promise<UserSettings>} User settings
+   * @throws {NotFoundException} If user not found
+   */
   async getUserSettings(userId: string): Promise<UserSettings> {
     this.logger.debug(`Getting settings for user: ${userId}`);
 
-    // Получаем данные пользователя из Firebase
+    // Get user data from Firebase
     const user = await this.firebaseService.getUser(userId);
 
-    // Если пользователь не найден - выбрасываем ошибку 404
+    // If user not found - throw 404 error
     if (!user) {
       throw new NotFoundException(`User ${userId} not found`);
     }
 
-    // Возвращаем настройки пользователя
+    // Return user settings
     return {
       user_id: user.user_id,
       base_currency: user.base_currency,
@@ -31,24 +36,30 @@ export class UserService {
     };
   }
 
-  //Обновить настройки пользователя
+  /**
+   * Update user settings
+   * @param {string} userId - User ID
+   * @param {UpdateUserDto} updateDto - Update data
+   * @returns {Promise<UserSettings>} Updated user settings
+   * @throws {NotFoundException} If user not found
+   */
   async updateUserSettings(
     userId: string,
     updateDto: UpdateUserDto,
   ): Promise<UserSettings> {
     this.logger.debug(`Updating settings for user: ${userId}`);
 
-    // Проверяем, существует ли пользователь
+    // Check if user exists
     const existingUser = await this.firebaseService.getUser(userId);
     if (!existingUser) {
       throw new NotFoundException(`User ${userId} not found`);
     }
 
-    // Обновляем данные в Firebase
-    // FirebaseService.updateUser сам обновит updated_at
+    // Update data in Firebase
+    // FirebaseService.updateUser will update updated_at automatically
     await this.firebaseService.updateUser(userId, updateDto);
 
-    // Получаем обновленные данные и возвращаем
+    // Get updated data and return
     const updatedUser = await this.firebaseService.getUser(userId);
 
     return {

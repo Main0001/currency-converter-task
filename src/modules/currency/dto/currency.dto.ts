@@ -1,11 +1,15 @@
 import { IsOptional, IsString, IsNotEmpty, Length, Matches } from 'class-validator';
 
-//CurrenciesResponse - ответ для GET /api/currencies
+/**
+ * CurrenciesResponse - response for GET /api/currencies
+ */
 export interface CurrenciesResponse {
   currencies: string[];
 }
 
-//RatesQuery - параметры запроса для GET /api/rates
+/**
+ * RatesQuery - query parameters for GET /api/rates
+ */
 export class RatesQuery {
   @IsOptional()
   @IsString()
@@ -21,7 +25,9 @@ export class RatesQuery {
   targets: string;
 }
 
-//RatesResponse - ответ для GET /api/rates
+/**
+ * RatesResponse - response for GET /api/rates
+ */
 export interface RatesResponse {
   base: string;
   rates: { [currency: string]: number };

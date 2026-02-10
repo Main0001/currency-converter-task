@@ -10,23 +10,23 @@ import { RatesCache, ExchangeRates } from '../../types/currency.types';
 
 @Injectable()
 export class FirebaseService implements OnModuleInit {
-  private firestore: Firestore;  // Объект для работы с Firestore
-  private readonly logger = new Logger(FirebaseService.name);  // Логгер для отладки
+  private firestore: Firestore;  // Firestore database object
+  private readonly logger = new Logger(FirebaseService.name);  // Logger for debugging
 
   constructor(private configService: ConfigService) {}
 
   /**
-   * onModuleInit - вызывается автоматически при старте приложения
-   * Здесь инициализируем Firebase Admin SDK
+   * onModuleInit - called automatically when application starts
+   * Initializes Firebase Admin SDK
    */
   async onModuleInit() {
     try {
-      // Получаем конфиг из .env через ConfigService
+      // Get config from .env via ConfigService
       const projectId = this.configService.get<string>('firebase.projectId');
       const clientEmail = this.configService.get<string>('firebase.clientEmail');
       const privateKey = this.configService.get<string>('firebase.privateKey');
 
-      // Инициализируем Firebase Admin SDK (модульный стиль)
+      // Initialize Firebase Admin SDK (modular style)
       initializeApp({
         credential: cert({
           projectId,
@@ -35,7 +35,7 @@ export class FirebaseService implements OnModuleInit {
         }),
       });
 
-      // Получаем объект Firestore для работы с БД
+      // Get Firestore object for database operations
       this.firestore = getFirestore();
 
       this.logger.log('Firebase initialized successfully');
@@ -45,28 +45,36 @@ export class FirebaseService implements OnModuleInit {
     }
   }
 
-  // ==================== МЕТОДЫ ДЛЯ РАБОТЫ С ПОЛЬЗОВАТЕЛЯМИ ====================
+  // ==================== USER MANAGEMENT METHODS ====================
 
-  //Создать нового пользователя в Firestore
+  /**
+   * Create new user in Firestore
+   * @param {string} userId - User ID
+   * @returns {Promise<UserSettings>} Created user data
+   */
   async createUser(userId: string): Promise<UserSettings> {
-    const now = new Date().toISOString();  // Текущая дата в ISO8601
+    const now = new Date().toISOString();  // Current date in ISO8601
 
     const newUser: UserSettings = {
       user_id: userId,
-      base_currency: 'USD',  // По умолчанию USD
-      favorites: [], 
+      base_currency: 'USD',  // Default USD
+      favorites: [],
       created_at: now,
       updated_at: now,
     };
 
-    // Сохраняем в коллекцию users с документом ID = userId
+    // Save to users collection with document ID = userId
     await this.firestore.collection('users').doc(userId).set(newUser);
 
     this.logger.log(`Created new user: ${userId}`);
     return newUser;
   }
 
-  //Получить данные пользователя по ID
+  /**
+   * Get user data by ID
+   * @param {string} userId - User ID
+   * @returns {Promise<UserSettings | null>} User data or null if not found
+   */
   async getUser(userId: string): Promise<UserSettings | null> {
     const doc = await this.firestore.collection('users').doc(userId).get();
 
@@ -77,7 +85,12 @@ export class FirebaseService implements OnModuleInit {
     return doc.data() as UserSettings;
   }
 
-  //Обновить данные пользователя
+  /**
+   * Update user data
+   * @param {string} userId - User ID
+   * @param {UpdateUserDto} data - Data to update
+   * @returns {Promise<UserSettings>} Updated user data
+   */
   async updateUser(
     userId: string,
     data: UpdateUserDto,
@@ -94,13 +107,13 @@ export class FirebaseService implements OnModuleInit {
       updateData.favorites = data.favorites;
     }
 
-    // Обновляем документ в Firestore
+    // Update document in Firestore
     await this.firestore.collection('users').doc(userId).update(updateData);
 
-    // Получаем обновленные данные
+    // Get updated data
     const updatedUser = await this.getUser(userId);
 
-    // Проверяем что пользователь существует
+    // Check that user exists
     if (!updatedUser) {
       throw new NotFoundException(`User ${userId} not found after update`);
     }
@@ -109,20 +122,26 @@ export class FirebaseService implements OnModuleInit {
     return updatedUser;
   }
 
-  // ==================== МЕТОДЫ ДЛЯ КЕШИРОВАНИЯ КУРСОВ ====================
+  // ==================== EXCHANGE RATES CACHING METHODS ====================
 
-  //Сохранить курсы валют в кеш
+  /**
+   * Save exchange rates to cache
+   * @param {string} base - Base currency
+   * @param {string[]} targets - Target currencies
+   * @param {ExchangeRates} rates - Exchange rates data
+   * @returns {Promise<void>}
+   */
   async saveRatesToCache(
     base: string,
     targets: string[],
     rates: ExchangeRates,
   ): Promise<void> {
-    // Генерируем ключ: USD_EUR_GBP_JPY (отсортированные)
+    // Generate key: USD_EUR_GBP_JPY (sorted)
     const cacheKey = this.generateCacheKey(base, targets);
 
-    const now = Date.now();  // Текущий timestamp
-    const ttlHours = this.configService.get<number>('cache.dbTtlHours') || 24;  // 24 часа по умолчанию
-    const expiresAt = now + ttlHours * 60 * 60 * 1000;  // +24 часа в миллисекундах
+    const now = Date.now();  // Current timestamp
+    const ttlHours = this.configService.get<number>('cache.dbTtlHours') || 24;  // Default 24 hours
+    const expiresAt = now + ttlHours * 60 * 60 * 1000;  // +24 hours in milliseconds
 
     const cacheEntry: RatesCache = {
       base,
@@ -131,13 +150,18 @@ export class FirebaseService implements OnModuleInit {
       expires_at: expiresAt,
     };
 
-    // Сохраняем в коллекцию rates_cache
+    // Save to rates_cache collection
     await this.firestore.collection('rates_cache').doc(cacheKey).set(cacheEntry);
 
     this.logger.log(`Saved rates to cache: ${cacheKey}`);
   }
 
-  //Получить курсы из кеша
+  /**
+   * Get exchange rates from cache
+   * @param {string} base - Base currency
+   * @param {string[]} targets - Target currencies
+   * @returns {Promise<ExchangeRates | null>} Cached rates or null if not found/expired
+   */
   async getRatesFromCache(
     base: string,
     targets: string[],
@@ -147,16 +171,16 @@ export class FirebaseService implements OnModuleInit {
     const doc = await this.firestore.collection('rates_cache').doc(cacheKey).get();
 
     if (!doc.exists) {
-      return null;  // Кеш не найден
+      return null;  // Cache not found
     }
 
     const cacheEntry = doc.data() as RatesCache;
     const now = Date.now();
 
-    // Проверяем истек ли кеш
+    // Check if cache expired
     if (now > cacheEntry.expires_at) {
       this.logger.log(`Cache expired: ${cacheKey}`);
-      // Можно удалить истекший кеш (опционально)
+      // Delete expired cache (optional)
       await this.firestore.collection('rates_cache').doc(cacheKey).delete();
       return null;
     }
@@ -166,22 +190,30 @@ export class FirebaseService implements OnModuleInit {
   }
 
   /**
-   * Генерация ключа для кеша
-   * Формат: USD_EUR_GBP_JPY (базовая + отсортированные target)
+   * Generate cache key
+   * Format: USD_EUR_GBP_JPY (base + sorted targets)
+   * USD + [JPY, EUR, GBP] and USD + [EUR, GBP, JPY] should produce the same key
+   * @param {string} base - Base currency
+   * @param {string[]} targets - Target currencies
+   * @returns {string} Generated cache key
+   * @private
    */
   private generateCacheKey(base: string, targets: string[]): string {
-    // Сортируем targets
-    // USD + [JPY, EUR, GBP] и USD + [EUR, GBP, JPY] должны дать один ключ
+    // Sort targets
     const sortedTargets = [...targets].sort();
     return `${base}_${sortedTargets.join('_')}`;
   }
 
-  //чистить истекшие записи кеша
+  /**
+   * Clean expired cache entries
+   * Runs daily at 1 AM
+   * @returns {Promise<void>}
+   */
   @Cron(CronExpression.EVERY_DAY_AT_1AM)
   async cleanExpiredCache(): Promise<void> {
     const now = Date.now();
 
-    // Получаем только истекшие документы через where фильтр
+    // Get only expired documents via where filter
     const snapshot = await this.firestore
       .collection('rates_cache')
       .where('expires_at', '<', now)

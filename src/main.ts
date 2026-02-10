@@ -8,44 +8,44 @@ import { ValidationPipe } from '@nestjs/common';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  //CORS (Cross-Origin Resource Sharing)
+  // CORS (Cross-Origin Resource Sharing)
   app.enableCors({
     origin: true,
-    credentials: true, // Разрешить отправку cookies
+    credentials: true, // Allow sending cookies
     methods: ['GET', 'POST'],
     allowedHeaders: ['Content-Type', 'Authorization'],
   });
 
-  //cookie
+  // Cookie parser
   app.use(cookieParser());
 
-  //class-validator
+  // class-validator
   app.useGlobalPipes(
     new ValidationPipe({
-      whitelist: true, // Удаляет поля, которых нет в DTO
-      forbidNonWhitelisted: true, // Выбрасывает ошибку при лишних полях
-      transform: true, // Автоматически преобразует типы (string -> number)
+      whitelist: true, // Remove fields not present in DTO
+      forbidNonWhitelisted: true, // Throw error on extra fields
+      transform: true, // Automatically transform types (string -> number)
     }),
   );
 
 
-  //Фильтр исключений
+  // Exception filter
   app.useGlobalFilters(new HttpExceptionFilter());
 
-  //Swagger
+  // Swagger
   const config = new DocumentBuilder()
     .setTitle('Currency Converter API')
     .setDescription(
-      'API для конвертации валют с кешированием и персональными настройками пользователя',
+      'API for currency conversion with caching and personalized user settings',
     )
     .setVersion('1.0')
-    .addTag('currencies', 'Получение списка валют и курсов')
-    .addTag('user', 'Управление настройками пользователя')
+    .addTag('currencies', 'Get currency list and exchange rates')
+    .addTag('user', 'User settings management')
     .addCookieAuth('user_id', {
       type: 'apiKey',
       in: 'cookie',
       name: 'user_id',
-      description: 'ID пользователя (устанавливается автоматически при первом запросе)',
+      description: 'User ID (set automatically on first request)',
     })
     .build();
 

@@ -22,8 +22,8 @@ import appConfig from './config/app.config';
     ScheduleModule.forRoot(),
     ThrottlerModule.forRoot([
       {
-        ttl: 60000, // 60 секунд
-        limit: 20, // Максимум 20 запросов за 60 секунд
+        ttl: 60000, // 60 seconds
+        limit: 20, // Maximum 20 requests per 60 seconds
       },
     ]),
     FirebaseModule,

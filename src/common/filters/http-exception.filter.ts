@@ -8,7 +8,9 @@ import {
 } from '@nestjs/common';
 import type { Response } from 'express';
 
-//Формат ответа при ошибке
+/**
+ * Error response format
+ */
 interface ErrorResponse {
   statusCode: number;
   message: string;
@@ -17,7 +19,9 @@ interface ErrorResponse {
   path: string;
 }
 
-//HttpExceptionFilter - глобальный фильтр для обработки всех ошибок
+/**
+ * HttpExceptionFilter - global filter for handling all errors
+ */
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
   private readonly logger = new Logger(HttpExceptionFilter.name);
@@ -27,36 +31,36 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest();
 
-    // Определяем статус код и сообщение ошибки
+    // Determine status code and error message
     let status: number;
     let message: string;
     let error: string;
 
     if (exception instanceof HttpException) {
-      // Это HttpException (BadRequest, NotFound, Unauthorized и т.д.)
+      // This is HttpException (BadRequest, NotFound, Unauthorized, etc.)
       status = exception.getStatus();
       const exceptionResponse = exception.getResponse();
 
-      // getResponse() может вернуть строку или объект
+      // getResponse() can return a string or object
       if (typeof exceptionResponse === 'string') {
         message = exceptionResponse;
         error = exception.name;
       } else {
-        // Объект типа { message: '...', error: '...' }
+        // Object type { message: '...', error: '...' }
         const responseObj = exceptionResponse as { message?: string; error?: string };
         message = responseObj.message || exception.message;
         error = responseObj.error || exception.name;
       }
     } else if (exception instanceof Error) {
-      // Обычная ошибка JavaScript (не HttpException)
+      // Regular JavaScript error (not HttpException)
       status = HttpStatus.INTERNAL_SERVER_ERROR;
       message = 'Internal server error';
       error = 'Internal Server Error';
 
-      // Логируем полную ошибку (стек вызовов) для отладки
+      // Log full error (stack trace) for debugging
       this.logger.error(`Unexpected error: ${exception.message}`, exception.stack);
     } else {
-      // Неизвестный тип ошибки
+      // Unknown error type
       status = HttpStatus.INTERNAL_SERVER_ERROR;
       message = 'Internal server error';
       error = 'Internal Server Error';
@@ -64,7 +68,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
       this.logger.error('Unknown error type:', exception);
     }
 
-    // Формируем ответ
+    // Build response
     const errorResponse: ErrorResponse = {
       statusCode: status,
       message,
@@ -73,12 +77,12 @@ export class HttpExceptionFilter implements ExceptionFilter {
       path: request.url,
     };
 
-    // Логируем ошибку
+    // Log error
     if (status !== HttpStatus.INTERNAL_SERVER_ERROR) {
       this.logger.warn(`${status} ${error}: ${message} - ${request.url}`);
     }
 
-    // Отправляем ответ клиенту
+    // Send response to client
     response.status(status).json(errorResponse);
   }
 }

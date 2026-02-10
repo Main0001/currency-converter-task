@@ -6,10 +6,10 @@ import { CacheStorage, CacheParams } from './dto/cache-entry.dto';
 export class CacheService {
   private readonly logger = new Logger(CacheService.name);
 
-  // Объект для хранения кеша: { ключ: { data, expiresAt } }
+  // Cache storage object: { key: { data, expiresAt } }
   private cache: CacheStorage = {};
 
-  // TTL по умолчанию (5 минут в миллисекундах)
+  // Default TTL (5 minutes in milliseconds)
   private readonly defaultTtlMs: number;
 
   constructor(private readonly configService: ConfigService) {
@@ -20,7 +20,12 @@ export class CacheService {
     this.logger.log(`CacheService initialized with TTL: ${ttlMinutes} minutes`);
   }
 
-  //Сохранить данные в кеш
+  /**
+   * Save data to cache
+   * @param {string} key - Cache key
+   * @param {unknown} data - Data to cache
+   * @param {number} [ttlMs] - Optional TTL in milliseconds
+   */
   set(key: string, data: unknown, ttlMs?: number): void {
     const expiresAt = Date.now() + (ttlMs ?? this.defaultTtlMs);
 
@@ -28,7 +33,11 @@ export class CacheService {
     this.logger.debug(`Cache SET: ${key}`);
   }
 
-  //Получить данные из кеша
+  /**
+   * Get data from cache
+   * @param {string} key - Cache key
+   * @returns {unknown} Cached data or null if not found/expired
+   */
   get(key: string): unknown {
     const entry = this.cache[key];
 
@@ -37,7 +46,7 @@ export class CacheService {
       return null;
     }
 
-    // Проверяем истечение
+    // Check expiration
     if (Date.now() > entry.expiresAt) {
       delete this.cache[key];
       this.logger.debug(`Cache MISS (expired): ${key}`);
@@ -49,8 +58,11 @@ export class CacheService {
   }
 
   /**
-   * Генерация ключа для кеша
-   * Формат: endpoint:param1_param2 (отсортированные)
+   * Generate cache key
+   * Format: endpoint:param1_param2 (sorted)
+   * @param {string} endpoint - Endpoint name
+   * @param {CacheParams} params - Parameters object
+   * @returns {string} Generated cache key
    */
   generateKey(endpoint: string, params: CacheParams): string {
     if (!params || Object.keys(params).length === 0) {

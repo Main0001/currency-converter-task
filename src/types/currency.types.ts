@@ -1,12 +1,16 @@
-//Объект с кодами валют и их курсами
+/**
+ * Object with currency codes and their exchange rates
+ */
 export interface ExchangeRates {
   [currency: string]: number;
 }
 
-//RatesCache - структура кеша курсов валют в Firestore
+/**
+ * RatesCache - exchange rates cache structure in Firestore
+ */
 export interface RatesCache {
-  base: string;              // Базовая валюта (USD, EUR, etc)
-  rates: ExchangeRates;      // Курсы валют
-  cached_at: number;         // Когда закешировано
-  expires_at: number;        // Когда истекает кеш
+  base: string;              // Base currency (USD, EUR, etc)
+  rates: ExchangeRates;      // Exchange rates
+  cached_at: number;         // When cached (timestamp)
+  expires_at: number;        // When cache expires (timestamp)
 }

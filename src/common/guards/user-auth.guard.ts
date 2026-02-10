@@ -10,7 +10,9 @@ import type { Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { FirebaseService } from '../../modules/firebase/firebase.service';
 
-//UserAuthGuard - Guard для аутентификации пользователей через cookies
+/**
+ * UserAuthGuard - Guard for authenticating users via cookies
+ */
 @Injectable()
 export class UserAuthGuard implements CanActivate {
   private readonly logger = new Logger(UserAuthGuard.name);
@@ -24,22 +26,22 @@ export class UserAuthGuard implements CanActivate {
     const request = context.switchToHttp().getRequest();
     const response: Response = context.switchToHttp().getResponse();
 
-    // Получаем userId из cookie
+    // Get userId from cookie
     let userId: string | undefined = request.cookies?.user_id;
 
-    // Если cookie нет - создаем нового пользователя
+    // If no cookie exists - create new user
     if (!userId) {
       this.logger.log('No user_id cookie found, creating new user');
 
-      // Генерируем новый UUID
+      // Generate new UUID
       userId = uuidv4();
 
       try {
-        // Создаем пользователя в Firebase
+        // Create user in Firebase
         await this.firebaseService.createUser(userId);
         this.logger.log(`New user created: ${userId}`);
 
-        // Устанавливаем httpOnly cookie
+        // Set httpOnly cookie
         const maxAgeDays =
           this.configService.get<number>('cookie.maxAgeDays') || 365;
         const maxAgeMs = maxAgeDays * 24 * 60 * 60 * 1000;
@@ -51,7 +53,7 @@ export class UserAuthGuard implements CanActivate {
           secure: this.configService.get('nodeEnv') === 'production',
         });
 
-        // Добавляем userId в request для использования в контроллерах
+        // Add userId to request for use in controllers
         request.userId = userId;
         return true;
       } catch (error) {
@@ -60,22 +62,22 @@ export class UserAuthGuard implements CanActivate {
       }
     }
 
-    // Cookie есть - проверяем существование пользователя в БД
+    // Cookie exists - check if user exists in DB
     try {
       const user = await this.firebaseService.getUser(userId);
 
       if (!user) {
-        // Пользователь не найден - создаем его с текущим userId
+        // User not found - create it with current userId
         this.logger.log(`User ${userId} not found in DB, creating`);
         await this.firebaseService.createUser(userId);
       }
 
-      // Пользователь существует или был создан - добавляем userId в request
+      // User exists or was created - add userId to request
       request.userId = userId;
       this.logger.debug(`User authenticated: ${userId}`);
       return true;
     } catch (error) {
-      // Ошибка при получении/создании пользователя
+      // Error getting/creating user
       this.logger.error(`Error authenticating user ${userId}:`, error);
       throw new UnauthorizedException('Failed to authenticate user');
     }

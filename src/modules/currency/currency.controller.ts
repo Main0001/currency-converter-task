@@ -14,17 +14,17 @@ export class CurrencyController {
   constructor(private readonly currencyService: CurrencyService) {}
 
   @Get('currencies')
-  @Throttle({ default: { limit: 100, ttl: 60000 } }) // 100 запросов/мин
-  @ApiOperation({ summary: 'Получить список поддерживаемых валют' })
+  @Throttle({ default: { limit: 100, ttl: 60000 } }) // 100 requests/min
+  @ApiOperation({ summary: 'Get list of supported currencies' })
   @ApiResponse({
     status: 200,
-    description: 'Список валют успешно получен',
+    description: 'Currency list successfully retrieved',
     schema: {
       example: { currencies: ['USD', 'EUR', 'GBP', 'JPY'] },
     },
   })
-  @ApiResponse({ status: 429, description: 'Слишком много запросов (лимит: 100/мин)' })
-  @ApiResponse({ status: 500, description: 'Ошибка сервера' })
+  @ApiResponse({ status: 429, description: 'Too many requests (limit: 100/min)' })
+  @ApiResponse({ status: 500, description: 'Server error' })
   async getCurrencies(): Promise<CurrenciesResponse> {
     const currencies = await this.currencyService.getSupportedCurrencies();
     return { currencies };
@@ -32,22 +32,22 @@ export class CurrencyController {
 
   @Get('rates')
   @Throttle({ default: { limit: 100, ttl: 60000 } })
-  @ApiOperation({ summary: 'Получить курсы валют' })
+  @ApiOperation({ summary: 'Get exchange rates' })
   @ApiQuery({
     name: 'base',
     required: false,
-    description: 'Базовая валюта (если не указана - берется из настроек пользователя)',
+    description: 'Base currency (if not specified - taken from user settings)',
     example: 'USD',
   })
   @ApiQuery({
     name: 'targets',
     required: true,
-    description: 'Целевые валюты через запятую',
+    description: 'Target currencies separated by comma',
     example: 'EUR,GBP,JPY',
   })
   @ApiResponse({
     status: 200,
-    description: 'Курсы валют успешно получены',
+    description: 'Exchange rates successfully retrieved',
     schema: {
       example: {
         base: 'USD',
@@ -56,9 +56,9 @@ export class CurrencyController {
       },
     },
   })
-  @ApiResponse({ status: 400, description: 'Невалидные параметры' })
-  @ApiResponse({ status: 429, description: 'Слишком много запросов (лимит: 100/мин)' })
-  @ApiResponse({ status: 500, description: 'Ошибка сервера' })
+  @ApiResponse({ status: 400, description: 'Invalid parameters' })
+  @ApiResponse({ status: 429, description: 'Too many requests (limit: 100/min)' })
+  @ApiResponse({ status: 500, description: 'Server error' })
   async getRates(
     @Query() query: RatesQuery,
     @UserId() userId: string,
