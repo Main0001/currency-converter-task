@@ -10,7 +10,7 @@ import {
   CurrenciesResponse,
   RatesResponse,
   RequestParams,
-} from './dto/external-api.dto';
+} from './types/external-api.types';
 import type { ExchangeRates } from '../../types/currency.types';
 
 @Injectable()
