@@ -10,7 +10,11 @@ import { CacheModule } from './modules/cache/cache.module';
 import { ExternalApiModule } from './modules/external-api/external-api.module';
 import { CurrencyModule } from './modules/currency/currency.module';
 import { UserModule } from './modules/user/user.module';
+import { CronModule } from './modules/cron/cron.module';
 import appConfig from './config/app.config';
+
+const THROTTLE_TTL_MS = 60000; // ms (60 seconds)
+const THROTTLE_LIMIT = 20; // Maximum requests per TTL
 
 @Module({
   imports: [
@@ -22,8 +26,8 @@ import appConfig from './config/app.config';
     ScheduleModule.forRoot(),
     ThrottlerModule.forRoot([
       {
-        ttl: 60000, // 60 секунд
-        limit: 20, // Максимум 20 запросов за 60 секунд
+        ttl: THROTTLE_TTL_MS,
+        limit: THROTTLE_LIMIT,
       },
     ]),
     FirebaseModule,
@@ -31,6 +35,7 @@ import appConfig from './config/app.config';
     ExternalApiModule,
     CurrencyModule,
     UserModule,
+    CronModule,
   ],
   controllers: [AppController],
   providers: [

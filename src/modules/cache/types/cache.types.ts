@@ -5,11 +5,7 @@ export interface CacheEntry {
 }
 
 //CacheStorage - структура всего кеша
-export interface CacheStorage {
-  [key: string]: CacheEntry;
-}
+export type CacheStorage = Record<string, CacheEntry>;
 
 //CacheParams - параметры для генерации ключа кеша
-export interface CacheParams {
-  [key: string]: unknown;
-}
+export type CacheParams = Record<string, unknown>;

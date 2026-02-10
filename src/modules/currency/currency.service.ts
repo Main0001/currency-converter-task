@@ -4,13 +4,15 @@ import { FirebaseService } from '../firebase/firebase.service';
 import { ExternalApiService } from '../external-api/external-api.service';
 import type { RatesResponse } from './dto/currency.dto';
 
+const DEFAULT_BASE_CURRENCY = 'USD';
+
 /**
- * CurrencyService - сервис для работы с валютами
+ * CurrencyService - service for working with currencies
  *
- * Реализует двухуровневое кеширование:
- * 1. RAM кеш (CacheService) - 5 минут
- * 2. DB кеш (FirebaseService) - 24 часа
- * 3. Внешний API (ExternalApiService) - если кеш пустой
+ * Implements two-level caching:
+ * 1. RAM cache (CacheService) - 5 minutes
+ * 2. DB cache (FirebaseService) - 24 hours
+ * 3. External API (ExternalApiService) - if cache is empty
  */
 @Injectable()
 export class CurrencyService {
@@ -22,41 +24,50 @@ export class CurrencyService {
     private readonly externalApiService: ExternalApiService,
   ) {}
 
-  //Получить список поддерживаемых валют
+  /**
+   * Get list of supported currencies
+   * @returns {Promise<string[]>} Array of currency codes
+   */
   async getSupportedCurrencies(): Promise<string[]> {
     const cacheKey = 'currencies';
 
-    // 1. Проверяем RAM кеш
+    // 1. Check RAM cache
     const cached = this.cacheService.get(cacheKey);
     if (cached) {
       this.logger.debug('Currencies from RAM cache');
       return cached as string[];
     }
 
-    // 2. Запрос к внешнему API (для currencies не используем DB кеш)
+    // 2. Request from external API (DB cache not used for currencies)
     const currencies = await this.externalApiService.getSupportedCurrencies();
 
-    // 3. Сохраняем в RAM кеш
+    // 3. Save to RAM cache
     this.cacheService.set(cacheKey, currencies);
 
     return currencies;
   }
 
-  //Получить курсы валют
+  /**
+   * Get exchange rates
+   * @param {string | undefined} base - Base currency
+   * @param {string[]} targets - Target currencies
+   * @param {string} [userId] - Optional user ID to get default base currency
+   * @returns {Promise<RatesResponse>} Exchange rates response
+   */
   async getExchangeRates(
     base: string | undefined,
     targets: string[],
     userId?: string,
   ): Promise<RatesResponse> {
-    
-    // Если base не указан - получаем из настроек пользователя
+
+    // If base not specified - get from user settings
     let actualBase = base;
     if (!actualBase && userId) {
       const user = await this.firebaseService.getUser(userId);
       actualBase = user?.base_currency;
     }
     if (!actualBase) {
-      actualBase = 'USD';
+      actualBase = DEFAULT_BASE_CURRENCY;
     }
 
     const cacheKey = this.cacheService.generateKey('rates', {
@@ -64,14 +75,14 @@ export class CurrencyService {
       targets,
     });
 
-    // 1. Проверяем RAM кеш
+    // 1. Check RAM cache
     const cached = this.cacheService.get(cacheKey);
     if (cached) {
       this.logger.debug('Rates from RAM cache');
       return cached as RatesResponse;
     }
 
-    // 2. Проверяем DB кеш (Firebase)
+    // 2. Check DB cache (Firebase)
     const dbCached = await this.firebaseService.getRatesFromCache(actualBase, targets);
     if (dbCached) {
       this.logger.debug('Rates from DB cache');
@@ -80,12 +91,12 @@ export class CurrencyService {
         rates: dbCached,
         timestamp: new Date().toISOString(),
       };
-      // Сохраняем в RAM кеш
+      // Save to RAM cache
       this.cacheService.set(cacheKey, response);
       return response;
     }
 
-    // 3. Запрос к внешнему API
+    // 3. Request from external API
     this.logger.debug('Rates from external API');
     const rates = await this.externalApiService.getExchangeRates(actualBase, targets);
 
@@ -95,10 +106,10 @@ export class CurrencyService {
       timestamp: new Date().toISOString(),
     };
 
-    // 4. Сохраняем в DB кеш (24 часа)
+    // 4. Save to DB cache (24 hours)
     await this.firebaseService.saveRatesToCache(actualBase, targets, rates);
 
-    // 5. Сохраняем в RAM кеш (5 минут)
+    // 5. Save to RAM cache (5 minutes)
     this.cacheService.set(cacheKey, response);
 
     return response;

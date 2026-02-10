@@ -1,11 +1,14 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
 
-// Декоратор для получения userId из запроса
+/**
+ * Decorator to extract userId from request
+ * @returns {string} User ID that was set in UserAuthGuard
+ */
 export const UserId = createParamDecorator(
   (data: unknown, ctx: ExecutionContext): string => {
     const request = ctx.switchToHttp().getRequest();
 
-    // Возвращаем userId, который был установлен в UserAuthGuard
+    // Return userId that was set in UserAuthGuard
     return request.userId;
   },
 );

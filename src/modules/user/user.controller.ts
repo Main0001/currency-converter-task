@@ -14,10 +14,10 @@ export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Get()
-  @ApiOperation({ summary: 'Получить настройки пользователя' })
+  @ApiOperation({ summary: 'Get user settings' })
   @ApiResponse({
     status: 200,
-    description: 'Настройки пользователя успешно получены',
+    description: 'User settings successfully retrieved',
     schema: {
       example: {
         user_id: '123e4567-e89b-12d3-a456-426614174000',
@@ -28,38 +28,38 @@ export class UserController {
       },
     },
   })
-  @ApiResponse({ status: 401, description: 'Cookie user_id отсутствует' })
-  @ApiResponse({ status: 404, description: 'Пользователь не найден' })
-  @ApiResponse({ status: 429, description: 'Слишком много запросов (лимит: 20/мин)' })
-  @ApiResponse({ status: 500, description: 'Ошибка сервера' })
+  @ApiResponse({ status: 401, description: 'Cookie user_id is missing' })
+  @ApiResponse({ status: 404, description: 'User not found' })
+  @ApiResponse({ status: 429, description: 'Too many requests (limit: 20/min)' })
+  @ApiResponse({ status: 500, description: 'Server error' })
   async getUserSettings(@UserId() userId: string): Promise<UserSettings> {
     return this.userService.getUserSettings(userId);
   }
 
   @Post()
-  @ApiOperation({ summary: 'Обновить настройки пользователя' })
+  @ApiOperation({ summary: 'Update user settings' })
   @ApiBody({
-    description: 'Данные для обновления (все поля опциональные)',
+    description: 'Data to update (all fields are optional)',
     schema: {
       type: 'object',
       properties: {
         base_currency: {
           type: 'string',
           example: 'EUR',
-          description: 'Новая базовая валюта',
+          description: 'New base currency',
         },
         favorites: {
           type: 'array',
           items: { type: 'string' },
           example: ['USD', 'GBP', 'JPY'],
-          description: 'Новый список избранных валют',
+          description: 'New list of favorite currencies',
         },
       },
     },
   })
   @ApiResponse({
     status: 200,
-    description: 'Настройки успешно обновлены',
+    description: 'Settings successfully updated',
     schema: {
       example: {
         user_id: '123e4567-e89b-12d3-a456-426614174000',
@@ -70,11 +70,11 @@ export class UserController {
       },
     },
   })
-  @ApiResponse({ status: 400, description: 'Невалидные данные' })
-  @ApiResponse({ status: 401, description: 'Cookie user_id отсутствует' })
-  @ApiResponse({ status: 404, description: 'Пользователь не найден' })
-  @ApiResponse({ status: 429, description: 'Слишком много запросов (лимит: 20/мин)' })
-  @ApiResponse({ status: 500, description: 'Ошибка сервера' })
+  @ApiResponse({ status: 400, description: 'Invalid data' })
+  @ApiResponse({ status: 401, description: 'Cookie user_id is missing' })
+  @ApiResponse({ status: 404, description: 'User not found' })
+  @ApiResponse({ status: 429, description: 'Too many requests (limit: 20/min)' })
+  @ApiResponse({ status: 500, description: 'Server error' })
   async updateUserSettings(
     @UserId() userId: string,
     @Body() updateDto: UpdateUserDto,

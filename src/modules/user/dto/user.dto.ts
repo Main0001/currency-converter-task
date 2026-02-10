@@ -1,6 +1,8 @@
 import { IsOptional, IsString, IsArray, Length, Matches } from 'class-validator';
 
-//UserSettings - настройки пользователя (ответ GET /api/user)
+/**
+ * UserSettings - user settings (response for GET /api/user)
+ */
 export interface UserSettings {
   user_id: string;
   base_currency: string;
@@ -9,7 +11,9 @@ export interface UserSettings {
   updated_at: string;
 }
 
-//UpdateUserDto - данные для обновления настроек (тело POST /api/user)
+/**
+ * UpdateUserDto - data for updating settings (body for POST /api/user)
+ */
 export class UpdateUserDto {
   @IsOptional()
   @IsString()
@@ -25,10 +29,11 @@ export class UpdateUserDto {
   favorites?: string[];
 }
 
-//FirestoreUpdateData - данные для обновления в Firestore
-export interface FirestoreUpdateData {
+/**
+ * FirestoreUpdateData - data for updating in Firestore
+ */
+export type FirestoreUpdateData = {
   base_currency?: string;
   favorites?: string[];
   updated_at: string;
-  [key: string]: any;
-}
+} & Record<string, any>;
