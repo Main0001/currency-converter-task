@@ -18,7 +18,7 @@ export default () => ({
 
   // CurrencyAPI
   currencyApi: {
-    apiKey: env.get('CURRENCY_API_KEY').required().asString(),
+    apiKey: env.get('CURRENCY_API_KEY').required().default('').asString(),
     baseUrl: env
       .get('CURRENCY_API_BASE_URL')
       .default('https://api.currencyapi.com/v3')

@@ -22,14 +22,10 @@ export class ExternalApiService {
   private readonly maxRetries: number;
 
   constructor(private readonly configService: ConfigService) {
-    this.apiKey = this.configService.get<string>('currencyApi.apiKey') || '';
-    this.baseUrl =
-      this.configService.get<string>('currencyApi.baseUrl') ||
-      'https://api.currencyapi.com/v3';
-    this.timeout =
-      this.configService.get<number>('currencyApi.timeoutMs') || 10000;
-    this.maxRetries =
-      this.configService.get<number>('currencyApi.maxRetries') || 3;
+    this.apiKey = this.configService.get<string>('currencyApi.apiKey')!;
+    this.baseUrl = this.configService.get<string>('currencyApi.baseUrl')!;
+    this.timeout = this.configService.get<number>('currencyApi.timeoutMs')!;
+    this.maxRetries = this.configService.get<number>('currencyApi.maxRetries')!;
 
     if (!this.apiKey) {
       this.logger.warn('CURRENCY_API_KEY is not set!');
