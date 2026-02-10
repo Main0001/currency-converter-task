@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { CacheStorage, CacheParams } from './dto/cache-entry.dto';
+import { CacheStorage, CacheParams } from './types/cache.types';
 
 @Injectable()
 export class CacheService {

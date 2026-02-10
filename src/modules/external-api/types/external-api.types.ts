@@ -6,9 +6,7 @@ export interface CurrencyInfo {
 
 //CurrenciesResponse - ответ от GET /v3/currencies
 export interface CurrenciesResponse {
-  data: {
-    [code: string]: CurrencyInfo;
-  };
+  data: Record<string, CurrencyInfo>;
 }
 
 //RateInfo - информация о курсе валюты
@@ -19,9 +17,7 @@ export interface RateInfo {
 
 //RatesResponse - ответ от GET /v3/latest
 export interface RatesResponse {
-  data: {
-    [code: string]: RateInfo;
-  };
+  data: Record<string, RateInfo>;
 }
 
 //RequestParams - параметры запроса к API

@@ -30,6 +30,6 @@ export class RatesQuery {
  */
 export interface RatesResponse {
   base: string;
-  rates: { [currency: string]: number };
+  rates: Record<string, number>;
   timestamp: string;
 }

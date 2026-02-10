@@ -32,9 +32,8 @@ export class UpdateUserDto {
 /**
  * FirestoreUpdateData - data for updating in Firestore
  */
-export interface FirestoreUpdateData {
+export type FirestoreUpdateData = {
   base_currency?: string;
   favorites?: string[];
   updated_at: string;
-  [key: string]: any;
-}
+} & Record<string, any>;
