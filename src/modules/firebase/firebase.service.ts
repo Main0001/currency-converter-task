@@ -1,4 +1,9 @@
-import { Injectable, Logger, NotFoundException, OnModuleInit } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+  OnModuleInit,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { initializeApp, cert } from 'firebase-admin/app';
@@ -7,11 +12,10 @@ import { UpdateUserDto, FirestoreUpdateData } from '../user/dto/user.dto';
 import type { UserSettings } from '../user/dto/user.dto';
 import { RatesCache, ExchangeRates } from '../../types/currency.types';
 
-
 @Injectable()
 export class FirebaseService implements OnModuleInit {
-  private firestore: Firestore;  // Firestore database object
-  private readonly logger = new Logger(FirebaseService.name);  // Logger for debugging
+  private firestore: Firestore; // Firestore database object
+  private readonly logger = new Logger(FirebaseService.name); // Logger for debugging
 
   constructor(private configService: ConfigService) {}
 
@@ -23,7 +27,9 @@ export class FirebaseService implements OnModuleInit {
     try {
       // Get config from .env via ConfigService
       const projectId = this.configService.get<string>('firebase.projectId');
-      const clientEmail = this.configService.get<string>('firebase.clientEmail');
+      const clientEmail = this.configService.get<string>(
+        'firebase.clientEmail',
+      );
       const privateKey = this.configService.get<string>('firebase.privateKey');
 
       // Initialize Firebase Admin SDK (modular style)
@@ -53,11 +59,11 @@ export class FirebaseService implements OnModuleInit {
    * @returns {Promise<UserSettings>} Created user data
    */
   async createUser(userId: string): Promise<UserSettings> {
-    const now = new Date().toISOString();  // Current date in ISO8601
+    const now = new Date().toISOString(); // Current date in ISO8601
 
     const newUser: UserSettings = {
       user_id: userId,
-      base_currency: 'USD',  // Default USD
+      base_currency: 'USD', // Default USD
       favorites: [],
       created_at: now,
       updated_at: now,
@@ -91,10 +97,7 @@ export class FirebaseService implements OnModuleInit {
    * @param {UpdateUserDto} data - Data to update
    * @returns {Promise<UserSettings>} Updated user data
    */
-  async updateUser(
-    userId: string,
-    data: UpdateUserDto,
-  ): Promise<UserSettings> {
+  async updateUser(userId: string, data: UpdateUserDto): Promise<UserSettings> {
     const updateData: FirestoreUpdateData = {
       updated_at: new Date().toISOString(),
     };
@@ -139,9 +142,10 @@ export class FirebaseService implements OnModuleInit {
     // Generate key: USD_EUR_GBP_JPY (sorted)
     const cacheKey = this.generateCacheKey(base, targets);
 
-    const now = Date.now();  // Current timestamp
-    const ttlHours = this.configService.get<number>('cache.dbTtlHours') || 24;  // Default 24 hours
-    const expiresAt = now + ttlHours * 60 * 60 * 1000;  // +24 hours in milliseconds
+    const now = Date.now(); // Current timestamp
+    const ttlMs =
+      this.configService.get<number>('cache.dbCacheTtlMs') || 86400000;
+    const expiresAt = now + ttlMs;
 
     const cacheEntry: RatesCache = {
       base,
@@ -151,7 +155,10 @@ export class FirebaseService implements OnModuleInit {
     };
 
     // Save to rates_cache collection
-    await this.firestore.collection('rates_cache').doc(cacheKey).set(cacheEntry);
+    await this.firestore
+      .collection('rates_cache')
+      .doc(cacheKey)
+      .set(cacheEntry);
 
     this.logger.log(`Saved rates to cache: ${cacheKey}`);
   }
@@ -168,10 +175,13 @@ export class FirebaseService implements OnModuleInit {
   ): Promise<ExchangeRates | null> {
     const cacheKey = this.generateCacheKey(base, targets);
 
-    const doc = await this.firestore.collection('rates_cache').doc(cacheKey).get();
+    const doc = await this.firestore
+      .collection('rates_cache')
+      .doc(cacheKey)
+      .get();
 
     if (!doc.exists) {
-      return null;  // Cache not found
+      return null; // Cache not found
     }
 
     const cacheEntry = doc.data() as RatesCache;

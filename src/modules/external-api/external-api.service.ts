@@ -13,7 +13,6 @@ import {
 } from './dto/external-api.dto';
 import type { ExchangeRates } from '../../types/currency.types';
 
-
 @Injectable()
 export class ExternalApiService {
   private readonly logger = new Logger(ExternalApiService.name);
@@ -24,9 +23,13 @@ export class ExternalApiService {
 
   constructor(private readonly configService: ConfigService) {
     this.apiKey = this.configService.get<string>('currencyApi.apiKey') || '';
-    this.baseUrl = this.configService.get<string>('currencyApi.baseUrl') || 'https://api.currencyapi.com/v3';
-    this.timeout = this.configService.get<number>('currencyApi.timeout') || 10000;
-    this.maxRetries = this.configService.get<number>('currencyApi.maxRetries') || 3;
+    this.baseUrl =
+      this.configService.get<string>('currencyApi.baseUrl') ||
+      'https://api.currencyapi.com/v3';
+    this.timeout =
+      this.configService.get<number>('currencyApi.timeoutMs') || 10000;
+    this.maxRetries =
+      this.configService.get<number>('currencyApi.maxRetries') || 3;
 
     if (!this.apiKey) {
       this.logger.warn('CURRENCY_API_KEY is not set!');
@@ -55,7 +58,10 @@ export class ExternalApiService {
    * @param {string[]} targets - Target currencies
    * @returns {Promise<ExchangeRates>} Exchange rates object
    */
-  async getExchangeRates(base: string, targets: string[]): Promise<ExchangeRates> {
+  async getExchangeRates(
+    base: string,
+    targets: string[],
+  ): Promise<ExchangeRates> {
     const url = `${this.baseUrl}/latest`;
     const params: RequestParams = {
       base_currency: base,
@@ -82,7 +88,10 @@ export class ExternalApiService {
    * @returns {Promise<T>} Response data
    * @private
    */
-  private async makeRequest<T>(url: string, params?: RequestParams): Promise<T> {
+  private async makeRequest<T>(
+    url: string,
+    params?: RequestParams,
+  ): Promise<T> {
     // Try maxRetries times
     for (let attempt = 1; attempt <= this.maxRetries; attempt++) {
       try {
@@ -96,7 +105,9 @@ export class ExternalApiService {
 
         return response.data;
       } catch (error) {
-        this.logger.warn(`API request failed (attempt ${attempt}/${this.maxRetries}): ${error.message}`);
+        this.logger.warn(
+          `API request failed (attempt ${attempt}/${this.maxRetries}): ${error.message}`,
+        );
 
         // Check error type
         if (error.response) {
