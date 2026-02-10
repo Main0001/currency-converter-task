@@ -10,7 +10,8 @@ import { initializeApp, cert } from 'firebase-admin/app';
 import { getFirestore, Firestore } from 'firebase-admin/firestore';
 import { UpdateUserDto, FirestoreUpdateData } from '../user/dto/user.dto';
 import type { UserSettings } from '../user/dto/user.dto';
-import { RatesCache, ExchangeRates } from '../../types/currency.types';
+import { ExchangeRates } from '../../types/currency.types';
+import { RatesCache } from './types/firebase.types';
 
 @Injectable()
 export class FirebaseService implements OnModuleInit {
