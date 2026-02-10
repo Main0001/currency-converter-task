@@ -13,11 +13,13 @@ export class CacheService {
   private readonly defaultTtlMs: number;
 
   constructor(private readonly configService: ConfigService) {
-    const ttlMs =
-      this.configService.get<number>('cache.memoryCacheTtlMs') || 300000;
-    this.defaultTtlMs = ttlMs;
+    this.defaultTtlMs = this.configService.get<number>(
+      'cache.memoryCacheTtlMs',
+    )!;
 
-    this.logger.log(`CacheService initialized with TTL: ${ttlMs} ms`);
+    this.logger.log(
+      `CacheService initialized with TTL: ${this.defaultTtlMs} ms`,
+    );
   }
 
   /**
