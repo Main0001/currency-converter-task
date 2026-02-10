@@ -37,9 +37,7 @@ export class ExternalApiService {
    * @returns {Promise<string[]>} Array of currency codes
    */
   async getSupportedCurrencies(): Promise<string[]> {
-    const url = `${this.baseUrl}/currencies`;
-
-    const response = await this.makeRequest<CurrenciesResponse>(url);
+    const response = await this.makeRequest<CurrenciesResponse>('/currencies');
 
     // Extract currency codes from response
     const currencies = Object.keys(response.data);
@@ -58,13 +56,12 @@ export class ExternalApiService {
     base: string,
     targets: string[],
   ): Promise<ExchangeRates> {
-    const url = `${this.baseUrl}/latest`;
     const params: RequestParams = {
       base_currency: base,
       currencies: targets.join(','),
     };
 
-    const response = await this.makeRequest<RatesResponse>(url, params);
+    const response = await this.makeRequest<RatesResponse>('/latest', params);
 
     // Transform response into simple object { EUR: 0.85, GBP: 0.73 }
     const rates: ExchangeRates = {};
@@ -79,15 +76,17 @@ export class ExternalApiService {
 
   /**
    * Execute HTTP request with retry logic
-   * @param {string} url - Request URL
+   * @param {string} endpoint - API endpoint path (e.g., '/currencies', '/latest')
    * @param {RequestParams} [params] - Optional request parameters
    * @returns {Promise<T>} Response data
    * @private
    */
   private async makeRequest<T>(
-    url: string,
+    endpoint: string,
     params?: RequestParams,
   ): Promise<T> {
+    const url = `${this.baseUrl}${endpoint}`;
+
     // Try maxRetries times
     for (let attempt = 1; attempt <= this.maxRetries; attempt++) {
       try {
