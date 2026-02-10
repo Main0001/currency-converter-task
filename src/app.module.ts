@@ -10,6 +10,7 @@ import { CacheModule } from './modules/cache/cache.module';
 import { ExternalApiModule } from './modules/external-api/external-api.module';
 import { CurrencyModule } from './modules/currency/currency.module';
 import { UserModule } from './modules/user/user.module';
+import { CronModule } from './modules/cron/cron.module';
 import appConfig from './config/app.config';
 
 const THROTTLE_TTL_MS = 60000; // ms (60 seconds)
@@ -34,6 +35,7 @@ const THROTTLE_LIMIT = 20; // Maximum requests per TTL
     ExternalApiModule,
     CurrencyModule,
     UserModule,
+    CronModule,
   ],
   controllers: [AppController],
   providers: [

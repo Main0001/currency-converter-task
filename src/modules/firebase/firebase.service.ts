@@ -12,13 +12,17 @@ import { UpdateUserDto, FirestoreUpdateData } from '../user/dto/user.dto';
 import type { UserSettings } from '../user/dto/user.dto';
 import { ExchangeRates } from '../../types/currency.types';
 import { RatesCache } from './types/firebase.types';
+import { CronService } from '../cron/cron.service';
 
 @Injectable()
 export class FirebaseService implements OnModuleInit {
   private firestore: Firestore; // Firestore database object
   private readonly logger = new Logger(FirebaseService.name); // Logger for debugging
 
-  constructor(private configService: ConfigService) {}
+  constructor(
+    private configService: ConfigService,
+    private cronService: CronService,
+  ) {}
 
   /**
    * onModuleInit - called automatically when application starts
@@ -222,20 +226,6 @@ export class FirebaseService implements OnModuleInit {
    */
   @Cron(CronExpression.EVERY_DAY_AT_1AM)
   async cleanExpiredCache(): Promise<void> {
-    const now = Date.now();
-
-    // Get only expired documents via where filter
-    const snapshot = await this.firestore
-      .collection('rates_cache')
-      .where('expires_at', '<', now)
-      .get();
-
-    const deleteTasks: Promise<FirebaseFirestore.WriteResult>[] = [];
-    snapshot.forEach((doc) => {
-      deleteTasks.push(doc.ref.delete());
-    });
-
-    await Promise.all(deleteTasks);
-    this.logger.log(`Cleaned ${deleteTasks.length} expired cache entries`);
+    await this.cronService.cleanExpiredRatesCache(this.firestore);
   }
 }
